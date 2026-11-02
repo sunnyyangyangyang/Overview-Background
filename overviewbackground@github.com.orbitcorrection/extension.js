@@ -98,8 +98,8 @@ export default class OvervievBackgroudExtension extends Extension {
         
         this._bgManagers = [];    
         
-        const themeContext = St.ThemeContext.get_for_stage(global.stage);
-        this._signalnotifyscalefactor = themeContext.connectObject('notify::scale-factor',
+        this._themeContext = St.ThemeContext.get_for_stage(global.stage);
+        this._signalnotifyscalefactor = this._themeContext.connectObject('notify::scale-factor',
             () => this._updateBackgroundEffects(), this);
         
         this._updateBackgrounds();
@@ -119,9 +119,10 @@ export default class OvervievBackgroudExtension extends Extension {
         this._settingsChangeId = null;
         this._settings = null;
         if (this._signalnotifyscalefactor) { 
-            themeContext.disconnectObject(this._signalnotifyscalefactor);
+            this._themeContext.disconnectObject(this._signalnotifyscalefactor);
             this._signalnotifyscalefactor = null;
         }
+        this._themeContext = null;
         if (this._signalmonitorchanged) {
             Main.layoutManager.disconnectObject(this._signalmonitorchanged);
             this._signalmonitorchanged = null;
