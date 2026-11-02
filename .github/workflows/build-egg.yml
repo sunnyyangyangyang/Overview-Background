@@ -1,4 +1,4 @@
-name: build-egg
+name: build-and-publish
 
 on:
   push:
@@ -13,25 +13,35 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install glib tools
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq libglib2.0-dev
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libglib2.0-dev zip
 
-      - name: Compile schemas and package EGG
+      - name: Compile schemas and package zip
         run: |
           set -e
-          uuid=$(python3 -c "import json; print(json.load(open('overview-background@github.com.sunnyyangyangyang/metadata.json'))['uuid'])")
-          test "$uuid" = "overview-background@github.com.sunnyyangyangyang"
-          glib-compile-schemas "$uuid/schemas"
-          tar czf "$uuid.egg" "$uuid"
-          tar tzf "$uuid.egg"
+          glib-compile-schemas overview-background@github.com.sunnyyangyangyang/schemas
+          cd overview-background@github.com.sunnyyangyangyang
+          zip -qr ../pkg.zip .
+          cd ..
+          unzip -l pkg.zip
 
       - uses: actions/upload-artifact@v4
         with:
-          name: extension-egg
-          path: '*.egg'
+          name: extension-package
+          path: pkg.zip
 
-      - name: Publish release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
+  publish:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
         with:
-          files: '*.egg'
-          generate_release_notes: true
+          name: extension-package
+
+      - name: Upload to extensions.gnome.org
+        env:
+          EXT_USERNAME: ${{ secrets.EXT_USERNAME }}
+          EXT_PASSWORD: ${{ secrets.EXT_PASSWORD }}
+        run: python3 scripts/upload.py pkg.zip
