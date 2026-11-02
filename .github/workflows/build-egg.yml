@@ -12,13 +12,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install glib tools
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq libglib2.0-dev zip
-
-      - name: Compile schemas and package zip
+      - name: Package zip
         run: |
           set -e
-          glib-compile-schemas overview-background@github.com.sunnyyangyangyang/schemas
           cd overview-background@github.com.sunnyyangyangyang
           zip -qr ../pkg.zip .
           cd ..
